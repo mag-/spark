@@ -31,7 +31,7 @@ import org.apache.hadoop.conf.{Configurable, Configuration}
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.io.SequenceFile.CompressionType
 import org.apache.hadoop.io.compress.CompressionCodec
-import org.apache.hadoop.mapred.{FileOutputCommitter, FileOutputFormat, JobConf, OutputFormat}
+import org.apache.hadoop.mapred.{FileOutputCommitter, FileOutputFormat, JobConf, OutputFormat, OutputCommitter}
 import org.apache.hadoop.mapreduce.{Job => NewAPIHadoopJob, OutputFormat => NewOutputFormat,
 RecordWriter => NewRecordWriter, SparkHadoopMapReduceUtil}
 
@@ -856,7 +856,8 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])
       valueClass: Class[_],
       outputFormatClass: Class[_ <: OutputFormat[_, _]],
       conf: JobConf = new JobConf(self.context.hadoopConfiguration),
-      codec: Option[Class[_ <: CompressionCodec]] = None) {
+      codec: Option[Class[_ <: CompressionCodec]] = None,
+      outputCommitter: Option[Class[_ <: OutputCommitter]] = None) {
     // Rename this as hadoopConf internally to avoid shadowing (see SPARK-2038).
     val hadoopConf = conf
     hadoopConf.setOutputKeyClass(keyClass)
@@ -872,7 +873,7 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])
       hadoopConf.set("mapred.output.compression.codec", c.getCanonicalName)
       hadoopConf.set("mapred.output.compression.type", CompressionType.BLOCK.toString)
     }
-    hadoopConf.setOutputCommitter(classOf[FileOutputCommitter])
+    hadoopConf.setOutputCommitter(outputCommitter.getOrElse(classOf[FileOutputCommitter]))
     FileOutputFormat.setOutputPath(hadoopConf,
       SparkHadoopWriter.createPathFromString(path, hadoopConf))
     saveAsHadoopDataset(hadoopConf)

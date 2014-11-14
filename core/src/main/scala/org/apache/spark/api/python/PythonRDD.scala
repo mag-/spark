@@ -219,7 +219,7 @@ private[spark] class PythonRDD(
       } finally {
         Try(worker.shutdownOutput()) // kill Python worker process
         // Release memory used by this thread for shuffles
-        env.shuffleMemoryManager.releaseMemoryForThisThread()
+        // env.shuffleMemoryManager.releaseMemoryForThisThread()
         // Release memory used by this thread for unrolling blocks
         env.blockManager.memoryStore.releaseUnrollMemoryForThisThread()
       }
